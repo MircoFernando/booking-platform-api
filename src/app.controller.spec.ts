@@ -14,9 +14,13 @@ describe('AppController', () => {
     appController = app.get<AppController>(AppController);
   });
 
-  describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+  describe('health', () => {
+    it('should return health status', () => {
+      const health = appController.getHealth();
+      expect(health.status).toBe('ok');
+      expect(health.message).toBe('EN2H Booking Platform API is running smoothly.');
+      expect(health.uptime).toBeGreaterThanOrEqual(0);
+      expect(health.timestamp).toBeDefined();
     });
   });
 });
