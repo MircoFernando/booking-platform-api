@@ -1,15 +1,15 @@
 import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { randomUUID } from 'crypto';
+import { RequestContext } from '../storage/request-context';
 
 @Injectable()
 export class TransformInterceptor<T> implements NestInterceptor<T, any> {
     intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-        const request = context.switchToHttp().getRequest();
 
-        // Generate a temporary request ID 
-        const requestId = request.requestId || `req_${randomUUID().split('-')[0]}`;
+        // Retrieve the RequestID
+        const store = RequestContext.getStore();
+        const requestId = store?.requestId || 'req_unknown';
 
         return next.handle().pipe(
             map((data) => {

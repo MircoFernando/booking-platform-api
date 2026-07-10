@@ -1,9 +1,15 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { AppLogger } from './common/logger/app-logger.service';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true
+  });
+
+  // Replace the default logger with our custom logger
+  app.useLogger(app.get(AppLogger));
 
   // Apply the global prefix
   app.setGlobalPrefix('api/v1');
