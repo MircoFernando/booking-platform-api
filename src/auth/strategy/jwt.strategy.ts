@@ -9,7 +9,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET || 'default-super-secret-key-change-in-production',
+      secretOrKey: process.env.JWT_SECRET!,
     });
   }
 
@@ -19,7 +19,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!user) {
       throw new UnauthorizedException('User not found or no longer exists');
     }
-    
+
     // Returning the user here attaches it to the request object: req.user
     return user;
   }

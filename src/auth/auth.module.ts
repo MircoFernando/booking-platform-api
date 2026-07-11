@@ -8,17 +8,17 @@ import { JwtStrategy } from './strategy';
 import { AppLogger } from '../common/logger/app-logger.service';
 
 @Module({
-  imports: [
-    UserModule,
-    PassportModule,
-    JwtModule.register({
-      global: true, // makes JwtService available everywhere without re-importing JwtModule
-      secret: process.env.JWT_SECRET || 'default-super-secret-key-change-in-production',
-      signOptions: { expiresIn: '1d' },
-    }),
-  ],
-  controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, AppLogger],
-  exports: [AuthService, JwtStrategy, PassportModule],
+    imports: [
+        UserModule,
+        PassportModule,
+        JwtModule.register({
+            global: true, // makes JwtService available everywhere without re-importing JwtModule
+            secret: process.env.JWT_SECRET,
+            signOptions: { expiresIn: '1d' },
+        }),
+    ],
+    controllers: [AuthController],
+    providers: [AuthService, JwtStrategy, AppLogger],
+    exports: [AuthService, JwtStrategy, PassportModule],
 })
-export class AuthModule {}
+export class AuthModule { }

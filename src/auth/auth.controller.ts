@@ -13,7 +13,7 @@ export class AuthController {
     }
 
     @Post('login')
-    @HttpCode(HttpStatus.OK) // Logins should return 200 OK, not 201 Created
+    @HttpCode(HttpStatus.OK)
     async login(@Body() loginDto: LoginDto) {
         return this.authService.login(loginDto);
     }
