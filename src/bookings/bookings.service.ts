@@ -9,26 +9,33 @@ export class BookingsService {
     async create(createBookingDto: CreateBookingDto) {
         const { serviceId, bookingDate, bookingTime, ...rest } = createBookingDto;
 
-        // 1. Verify that the service exists and is active
+        // Verify that the service exists and is active
         const service = await this.prisma.service.findUnique({
             where: { id: serviceId },
         });
 
         if (!service) {
-            throw new NotFoundException(`Service with ID ${serviceId} not found`);
+            throw new NotFoundException(`Service with ID ${serviceId} not found, Booking cannot be made.`);
         }
 
         if (!service.isActive) {
             throw new BadRequestException('This service is inactive and cannot be booked');
         }
 
-        // 2. Parse bookingDate and bookingTime into JavaScript Date objects
+        // Parse bookingDate and bookingTime into JavaScript Date objects
         const parsedDate = new Date(`${bookingDate}T00:00:00Z`);
-        
-        const timeStr = bookingTime.length === 5 ? `${bookingTime}:00` : bookingTime;
-        const parsedTime = new Date(`1970-01-01T${timeStr}Z`);
 
-        // 3. Create the booking
+        // Enforce that the booking date cannot be in the past
+        const today = new Date();
+        today.setUTCHours(0, 0, 0, 0); // Midnight UTC of today
+        if (parsedDate < today) {
+            throw new BadRequestException('Booking date cannot be in the past');
+        }
+
+        const timeStr = bookingTime.length === 5 ? `${bookingTime}:00` : bookingTime;
+        const parsedTime = new Date(`1970-01-01T${timeStr}Z`); // Unix Epoch Time 
+
+        // Create the booking
         return this.prisma.booking.create({
             data: {
                 ...rest,
