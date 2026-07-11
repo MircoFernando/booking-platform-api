@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
 import { UserService } from '../user/user.service';
-import { LoginDto, RegisterDto } from './dto';
+import { LoginDto, RegisterDto, RefreshDto, LogoutDto } from './dto';
 import { AppLogger } from '../common/logger/app-logger.service';
 
 @Injectable()
@@ -70,8 +70,29 @@ export class AuthService {
         };
     }
 
-    async logout(userId: string) {
+    async logout(userId: string, logoutDto: LogoutDto) {
         this.logger.log(`Attempting logout for User ID: ${userId}`);
+
+        // Find the user
+        const user = await this.userService.findRawById(userId);
+        if (!user) {
+            this.logger.error('Token logout failed: User not found');
+            throw new UnauthorizedException('Invalid tokens');
+        }
+
+        // Verify the refresh token if provided
+        if (logoutDto.refreshToken) {
+            if (!user.refreshTokenHash) {
+                this.logger.error('Token logout failed: No refresh token found');
+                throw new UnauthorizedException('Invalid tokens');
+            }
+
+            const isRefreshTokenValid = await argon2.verify(user.refreshTokenHash, logoutDto.refreshToken);
+            if (!isRefreshTokenValid) {
+                this.logger.error('Token logout failed: Invalid refresh token');
+                throw new UnauthorizedException('Invalid tokens');
+            }
+        }
 
         // Remove the refresh token from the user
         await this.userService.updateRefreshToken(userId, null);
@@ -83,7 +104,11 @@ export class AuthService {
         };
     }
 
-    async refreshTokens(userId: string, refreshToken: string) {
+    async refreshTokens(refreshDto: RefreshDto) {
+
+        const userId = refreshDto.userId;
+        const refreshToken = refreshDto.refreshToken;
+
         this.logger.log(`Attempting to refresh tokens for User ID: ${userId}`);
 
         // Find the user
