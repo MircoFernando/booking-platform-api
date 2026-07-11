@@ -4,7 +4,7 @@ import { PassportModule } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { UserModule } from '../user/user.module';
-import { JwtStrategy } from './strategy';
+import { JwtStrategy, JwtRefreshStrategy } from './strategy';
 import { AppLogger } from '../common/logger/app-logger.service';
 
 @Module({
@@ -18,7 +18,7 @@ import { AppLogger } from '../common/logger/app-logger.service';
         }),
     ],
     controllers: [AuthController],
-    providers: [AuthService, JwtStrategy, AppLogger],
-    exports: [AuthService, JwtStrategy, PassportModule],
+    providers: [AuthService, JwtStrategy, JwtRefreshStrategy, AppLogger],
+    exports: [AuthService, JwtStrategy, JwtRefreshStrategy, PassportModule],
 })
 export class AuthModule { }

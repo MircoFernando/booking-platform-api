@@ -45,12 +45,87 @@ export class AuthService {
 
         // Generate the JWT payload
         const payload = { sub: user.id, email: user.email };
-        const token = this.jwtService.sign(payload);
+        const accessToken = this.jwtService.sign(payload, {
+            secret: process.env.JWT_SECRET,
+            expiresIn: '15m',
+        });
+        const refreshToken = this.jwtService.sign(payload, {
+            secret: process.env.JWT_REFRESH_SECRET,
+            expiresIn: '7d',
+        });
+
+        // Hash and store the refresh token
+        const refreshTokenHash = await argon2.hash(refreshToken);
+        await this.userService.updateRefreshToken(user.id, refreshTokenHash);
 
         this.logger.log(`Login successful for User ID: ${user.id}`);
 
         return {
-            accessToken: token,
+            accessToken,
+            refreshToken,
+            user: {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+            },
+        };
+    }
+
+    async logout(userId: string) {
+        this.logger.log(`Attempting logout for User ID: ${userId}`);
+
+        // Remove the refresh token from the user
+        await this.userService.updateRefreshToken(userId, null);
+
+        this.logger.log(`Logout successful for User ID: ${userId}`);
+
+        return {
+            message: 'Logout successful',
+        };
+    }
+
+    async refreshTokens(userId: string, refreshToken: string) {
+        this.logger.log(`Attempting to refresh tokens for User ID: ${userId}`);
+
+        // Find the user
+        const user = await this.userService.findRawById(userId);
+        if (!user) {
+            this.logger.error('Token refresh failed: User not found');
+            throw new UnauthorizedException('Invalid tokens');
+        }
+
+        // Verify the refresh token
+        if (!user.refreshTokenHash) {
+            this.logger.error('Token refresh failed: No refresh token found');
+            throw new UnauthorizedException('Invalid tokens');
+        }
+
+        const isRefreshTokenValid = await argon2.verify(user.refreshTokenHash, refreshToken);
+        if (!isRefreshTokenValid) {
+            this.logger.error('Token refresh failed: Invalid refresh token');
+            throw new UnauthorizedException('Invalid tokens');
+        }
+
+        // Generate new tokens
+        const payload = { sub: user.id, email: user.email };
+        const accessToken = this.jwtService.sign(payload, {
+            secret: process.env.JWT_SECRET,
+            expiresIn: '15m',
+        });
+        const newRefreshToken = this.jwtService.sign(payload, {
+            secret: process.env.JWT_REFRESH_SECRET,
+            expiresIn: '7d',
+        });
+
+        // Hash and store the new refresh token
+        const newRefreshTokenHash = await argon2.hash(newRefreshToken);
+        await this.userService.updateRefreshToken(user.id, newRefreshTokenHash);
+
+        this.logger.log(`Tokens refreshed successfully for User ID: ${userId}`);
+
+        return {
+            accessToken,
+            refreshToken: newRefreshToken,
             user: {
                 id: user.id,
                 email: user.email,

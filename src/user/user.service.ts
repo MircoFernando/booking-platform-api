@@ -42,6 +42,12 @@ export class UserService {
     });
   }
 
+  async findRawById(id: string) {
+    return this.prisma.user.findUnique({
+      where: { id },
+    });
+  }
+
   async create(createUserDto: CreateUserDto, passwordHash: string) {
     // Check if user already exists
     const existingUser = await this.findByEmail(createUserDto.email);
@@ -55,6 +61,14 @@ export class UserService {
         name: createUserDto.name,
         passwordHash,
       },
+    });
+  }
+
+  // Refresh Token Implementation
+  async updateRefreshToken(id: string, refreshTokenHash: string | null) {
+    return this.prisma.user.update({
+      where: { id },
+      data: { refreshTokenHash },
     });
   }
 }

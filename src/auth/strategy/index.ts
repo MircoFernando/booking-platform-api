@@ -1,1 +1,2 @@
-export * from './jwt.strategy.js';  // Barrel file pattern
+export * from './jwt.strategy.js';
+export * from './jwt-refresh.strategy.js';

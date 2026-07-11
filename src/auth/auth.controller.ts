@@ -1,7 +1,8 @@
-import { Body, Controller, Post, HttpCode, HttpStatus } from '@nestjs/common';
+import { Body, Controller, Post, HttpCode, HttpStatus, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from '../user/dto/create-user.dto';
 import { LoginDto } from './dto/login.dto';
+import { JwtAuthGuard, JwtRefreshGuard } from './guards';
 
 @Controller('auth')
 export class AuthController {
@@ -16,5 +17,21 @@ export class AuthController {
     @HttpCode(HttpStatus.OK)
     async login(@Body() loginDto: LoginDto) {
         return this.authService.login(loginDto);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post('logout')
+    @HttpCode(HttpStatus.OK)
+    async logout(@Req() req: any) {
+        return this.authService.logout(req.user.id);
+    }
+
+    @UseGuards(JwtRefreshGuard)
+    @Post('refresh')
+    @HttpCode(HttpStatus.OK)
+    async refresh(@Req() req: any) {
+        const userId = req.user.sub;
+        const refreshToken = req.user.refreshToken;
+        return this.authService.refreshTokens(userId, refreshToken);
     }
 }
