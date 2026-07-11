@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
 
 @Injectable()
 export class BookingsService {
@@ -45,7 +46,88 @@ export class BookingsService {
                 status: 'PENDING', // Default state for a new booking
             },
             include: {
-                service: true, // Include the associated service in the returned payload
+                service: true, // Include the service in the returned payload
+            },
+        });
+    }
+
+    async getAllBookings(search?: string, status?: string) {
+        const where: any = {};
+
+        if (status) {
+            where.status = status;
+        }
+
+        if (search) {
+            where.OR = [
+                { customerName: { contains: search, mode: 'insensitive' } },
+                { customerEmail: { contains: search, mode: 'insensitive' } },
+                { customerPhone: { contains: search, mode: 'insensitive' } },
+            ];
+        }
+
+        return this.prisma.booking.findMany({
+            where,
+            include: {
+                service: true,
+            },
+        });
+    }
+
+    async findOne(id: string) {
+        const booking = await this.prisma.booking.findUnique({
+            where: { id },
+            include: {
+                service: true,
+            },
+        });
+
+        if (!booking) {
+            throw new NotFoundException(`Booking with ID ${id} not found`);
+        }
+
+        return booking;
+    }
+
+    async updateStatus(id: string, updateBookingStatusDto: UpdateBookingStatusDto) {
+        const booking = await this.findOne(id);
+        const newStatus = updateBookingStatusDto.status;
+
+        if (!booking) {
+            throw new NotFoundException(`Booking with ID ${id} not found`);
+        }
+
+        // Constraint: Cancelled bookings cannot be marked as completed
+        if (booking.status === 'CANCELLED' && newStatus === 'COMPLETED') {
+            throw new BadRequestException('Cancelled bookings cannot be marked as completed');
+        }
+
+        return this.prisma.booking.update({
+            where: { id },
+            data: { status: newStatus as any },
+            include: {
+                service: true,
+            },
+        });
+    }
+
+    async cancel(id: string) {
+        const booking = await this.findOne(id);
+
+        if (!booking) {
+            throw new NotFoundException(`Booking with ID ${id} not found`);
+        }
+
+        // Cancelled bookings 
+        if (booking.status === 'CANCELLED') {
+            throw new BadRequestException('Booking is already cancelled');
+        }
+
+        return this.prisma.booking.update({
+            where: { id },
+            data: { status: 'CANCELLED' },
+            include: {
+                service: true,
             },
         });
     }
