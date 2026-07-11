@@ -7,9 +7,10 @@ import { ServicesModule } from './services/services.module';
 import { AuthModule } from './auth/auth.module';
 import { RequestIdMiddleware } from './common/middlewares/request-id.midleware';
 import { AppLogger } from './common/logger/app-logger.service';
+import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
-  imports: [UserModule, BookingsModule, ServicesModule, AuthModule],
+  imports: [UserModule, BookingsModule, ServicesModule, AuthModule, PrismaModule],
   controllers: [AppController],
   providers: [AppService, AppLogger],
 })
