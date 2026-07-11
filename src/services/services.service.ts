@@ -16,7 +16,7 @@ export class ServicesService {
         });
     }
 
-    async update(id: string, userId: string, updateServiceDto: UpdateServiceDto) {
+    async update(id: string, updateServiceDto: UpdateServiceDto) {
         const service = await this.prisma.service.findUnique({
             where: { id },
         });
@@ -25,13 +25,39 @@ export class ServicesService {
             throw new NotFoundException(`Service with ID ${id} not found`);
         }
 
-        if (service.createdById !== userId) {
-            throw new ForbiddenException('You do not have permission to update this service');
-        }
-
         return this.prisma.service.update({
             where: { id },
             data: updateServiceDto,
         });
+    }
+
+    async delete(id: string) {
+        const service = await this.prisma.service.findUnique({
+            where: { id },
+        });
+
+        if (!service) {
+            throw new NotFoundException(`Service with ID ${id} not found`);
+        }
+
+        return this.prisma.service.delete({
+            where: { id },
+        });
+    }
+
+    async findAll() {
+        return this.prisma.service.findMany();
+    }
+
+    async findOne(id: string) {
+        const service = await this.prisma.service.findUnique({
+            where: { id }
+        });
+
+        if (!service) {
+            throw new NotFoundException(`Service with ID ${id} not found`);
+        }
+
+        return service
     }
 }
