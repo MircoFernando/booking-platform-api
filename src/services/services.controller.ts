@@ -53,13 +53,11 @@ export class ServicesController {
     }
 
     // Get Service by ID
-
-
-
+    // Route: GET /api/v1/services/:id
+    // Body: None
     @UseGuards(JwtAuthGuard)
     @Get(':id')
-    async findById(@Param('id') id: string
-    ) {
+    async findById(@Param('id') id: string) {
         return this.servicesService.findOne(id);
     }
 }
