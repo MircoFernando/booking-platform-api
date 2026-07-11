@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { Prisma } from '../generated/prisma/client';
 import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
 
 @Injectable()
@@ -37,18 +38,29 @@ export class BookingsService {
         const parsedTime = new Date(`1970-01-01T${timeStr}Z`); // Unix Epoch Time 
 
         // Create the booking
-        return this.prisma.booking.create({
-            data: {
-                ...rest,
-                serviceId,
-                bookingDate: parsedDate,
-                bookingTime: parsedTime,
-                status: 'PENDING', // Default state for a new booking
-            },
-            include: {
-                service: true, // Include the service in the returned payload
-            },
-        });
+        try {
+            return await this.prisma.booking.create({
+                data: {
+                    ...rest,
+                    serviceId,
+                    bookingDate: parsedDate,
+                    bookingTime: parsedTime,
+                    status: 'PENDING', // Default state for a new booking
+                },
+                include: {
+                    service: true, // Include the service in the returned payload
+                },
+            });
+        } catch (error) {
+            // Preventing duplicate bookings for the same service, date, and time using unique constraint on the database
+            if (error instanceof Prisma.PrismaClientKnownRequestError) {
+                // Prisma Error for unique constraint violation (P2002)
+                if (error.code === 'P2002') {
+                    throw new ConflictException('A booking already exists for this service at the selected date and time.');
+                }
+            }
+            throw error;
+        }
     }
 
     async getAllBookings(search?: string, status?: string) {

@@ -73,5 +73,6 @@ model Booking {
 
   service       Service       @relation(fields: [serviceId], references: [id])
 
+  @@unique([serviceId, bookingDate, bookingTime]) // Prevents duplicate bookings for the same service,date, Time
   @@map("bookings")
 }
