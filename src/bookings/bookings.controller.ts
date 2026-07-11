@@ -1,7 +1,6 @@
 import { Controller, Post, Body, Get, Patch, Param, UseGuards, Query, Req } from '@nestjs/common';
 import { BookingsService } from './bookings.service';
-import { CreateBookingDto } from './dto/create-booking.dto';
-import { UpdateBookingStatusDto } from './dto/update-booking-status.dto';
+import { CreateBookingDto, UpdateBookingStatusDto } from './dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('bookings')

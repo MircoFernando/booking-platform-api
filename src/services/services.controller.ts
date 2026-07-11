@@ -1,7 +1,6 @@
 import { Controller, Post, Body, UseGuards, Req, Patch, Param, Delete, Get } from '@nestjs/common';
 import { ServicesService } from './services.service';
-import { CreateServiceDto } from './dto/create-service.dto';
-import { UpdateServiceDto } from './dto/update-service.dto';
+import { CreateServiceDto, UpdateServiceDto } from './dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('services')
