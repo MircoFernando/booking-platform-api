@@ -2,8 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
 import { UserService } from '../user/user.service';
-import { CreateUserDto } from '../user/dto/create-user.dto';
-import { LoginDto } from './dto/login.dto';
+import { LoginDto, RegisterDto } from './dto';
 import { AppLogger } from '../common/logger/app-logger.service';
 
 @Injectable()
@@ -14,12 +13,12 @@ export class AuthService {
         private readonly logger: AppLogger,
     ) { }
 
-    async register(createUserDto: CreateUserDto) {
+    async register(registerDto: RegisterDto) {
         // Hash the password using Argon2
-        const passwordHash = await argon2.hash(createUserDto.password);
+        const passwordHash = await argon2.hash(registerDto.password);
 
         // Delegate the actual database insertion to the UserService
-        const user = await this.userService.create(createUserDto, passwordHash);
+        const user = await this.userService.create(registerDto, passwordHash);
 
         // Remove the hash before returning the user
         const { passwordHash: _, ...safeUser } = user;
