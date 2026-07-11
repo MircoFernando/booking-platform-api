@@ -11,9 +11,10 @@ services:
   server:
     build:
       context: .
+    init: true
     environment:
       NODE_ENV: ${NODE_ENV}
-      DATABASE_HOST: ${DATABASE_HOST}
+      DATABASE_HOST: db
       DATABASE_PORT: ${DATABASE_PORT}
       DATABASE_USER: ${DATABASE_USER}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD}
@@ -21,10 +22,12 @@ services:
       DATABASE_URL: postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@db:5432/${DATABASE_NAME}?schema=public
     ports:
       - "${PORT:-3000}:3000"
-    command: npm run start:dev
+    command: sh -c "npx prisma generate && npx prisma db push && npm run start:dev"
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
+    networks:
+      - prisma-network
     depends_on:
       db:
         condition: service_healthy
@@ -37,7 +40,9 @@ services:
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
       POSTGRES_DB: ${DATABASE_NAME}
     ports:
-      - "${DATABASE_PORT}:5432"
+      - "${DATABASE_PORT:-5432}:5432"
+    networks:
+      - prisma-network
     volumes:
       - db-data:/var/lib/postgresql/data
     healthcheck:
@@ -45,6 +50,9 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+networks:
+  prisma-network:
 
 volumes:
   db-data:

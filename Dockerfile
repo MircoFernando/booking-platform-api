@@ -12,26 +12,27 @@ ARG NODE_VERSION=24.18.0
 # Use node image for base image for all stages.
 FROM node:${NODE_VERSION}-alpine as base
 
-# Set working directory for all build stages.
+# Set working directory
 WORKDIR /usr/src/app
 
-# Set the working directory inside the container
-WORKDIR /usr/src/app
-
-# Copy package.json and package-lock.json to the working directory
+# Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Install the application dependencies
-RUN npm install
+# Install dependencies
+RUN npm cache clean --force
+RUN npm install --legacy-peer-deps
 
-# Copy the rest of the application files
+# Copy the rest of the application code
 COPY . .
+
+# Generate Prisma Client code
+RUN npx prisma generate
 
 # Build the NestJS application
 RUN npm run build
 
-# Expose the application port
+# Expose the port the app runs on
 EXPOSE 3000
 
-# Command to run the application
-CMD ["node", "dist/main"]
+# Command to run the app
+CMD [ "node", "dist/main" ]

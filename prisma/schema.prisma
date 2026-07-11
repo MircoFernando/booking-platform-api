@@ -8,8 +8,8 @@
 //a CommonJS module instead of ESM.
 
 generator client {
-  provider     = "prisma-client-js"
-  output       = "../generated/prisma"
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
   moduleFormat = "cjs"
 }
 
