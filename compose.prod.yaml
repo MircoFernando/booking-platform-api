@@ -1,0 +1,41 @@
+services:
+  server:
+    # Pull the pre-built production image from your registry (no local build context or node_modules mounts)
+    image: ${DOCKER_REGISTRY_USER:-your-username}/booking-platform-api:latest
+    restart: always
+    init: true
+    environment:
+      NODE_ENV: production
+      JWT_SECRET: ${JWT_SECRET:-fallback_production_secret_key_12345}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-fallback_production_refresh_secret_key_12345}
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_USER: ${DATABASE_USER:-postgres}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-postgres_password_12345}
+      DATABASE_NAME: ${DATABASE_NAME:-booking_platform}
+      DATABASE_URL: postgresql://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-postgres_password_12345}@db:5432/${DATABASE_NAME:-booking_platform}?schema=public
+    ports:
+      - "${PORT:-3000}:3000"
+    # Wait for DB readiness, then run production migrations and launch the compiled entrypoint
+    command: sh -c "npx prisma migrate deploy && node dist/main"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: ${DATABASE_USER:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-postgres_password_12345}
+      POSTGRES_DB: ${DATABASE_NAME:-booking_platform}
+    volumes:
+      - db-prod-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  db-prod-data:

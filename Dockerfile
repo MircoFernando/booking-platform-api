@@ -1,38 +1,47 @@
 # syntax=docker/dockerfile:1
-
-# Comments are provided throughout this file to help you get started.
-# If you need more help, visit the Dockerfile reference guide at
-# https://docs.docker.com/go/dockerfile-reference/
-
-# Want to help us make this template better? Share your feedback here: https://forms.gle/ybq9Krt8jtBL3iCk7
-
 ARG NODE_VERSION=24.18.0
 
-################################################################################
-# Use node image for base image for all stages.
-FROM node:${NODE_VERSION}-alpine as base
-
-# Set working directory
+# --- Stage 1: Build Stage ---
+FROM node:${NODE_VERSION}-alpine AS build
 WORKDIR /usr/src/app
 
-# Copy package.json and package-lock.json
+# Copy dependency configs
 COPY package*.json ./
 
-# Install dependencies
-RUN npm cache clean --force
+# Install all dependencies (including devDependencies)
 RUN npm install --legacy-peer-deps
 
-# Copy the rest of the application code
+# Copy codebase
 COPY . .
 
-# Generate Prisma Client code
+# Generate Prisma Client
 RUN npx prisma generate
 
-# Build the NestJS application
+# Build the compiled JavaScript application
 RUN npm run build
 
-# Expose the port the app runs on
+
+# --- Stage 2: Production Runtime Stage ---
+FROM node:${NODE_VERSION}-alpine AS production
+WORKDIR /usr/src/app
+
+# Set production env flag
+ENV NODE_ENV=production
+
+# Copy configurations and migrations
+COPY package*.json ./
+COPY prisma ./prisma/
+
+# Install only production dependencies
+RUN npm install --omit=dev --legacy-peer-deps
+
+# Copy generated Prisma Client and compiled JS artifact from build stage
+COPY --from=build /usr/src/app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=build /usr/src/app/src/generated/prisma ./src/generated/prisma
+COPY --from=build /usr/src/app/dist ./dist
+
+# Expose server port
 EXPOSE 3000
 
-# Command to run the app
+# Start compiled NestJS application
 CMD [ "node", "dist/main" ]
