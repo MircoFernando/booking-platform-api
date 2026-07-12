@@ -1,98 +1,184 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# EN2H Software Engineer Intern Technical Assignment – Booking Platform REST API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+An enterprise-ready Booking Platform REST API built with **NestJS**, **TypeScript**, and **PostgreSQL (via Prisma ORM)**. This API allows merchants to manage services and customers to create and manage bookings, featuring robust authentication, secure database design, and structured exception wrapping.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+---
 
-## Description
+## 🚀 Project Overview
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+The Booking Platform REST API is a scalable backend service structured following NestJS architectural best practices. It implements JWT token-based authentication (supporting dual tokens: short-lived Access Tokens and long-lived Refresh Tokens with secure Argon2 hashing), Service management, and Booking reservation slots with automated collision checks at the database layer.
 
-## Project setup
+---
 
-```bash
-$ npm install
+## 🛠️ Tech Stack
+
+* **Framework**: NestJS (v11)
+* **Language**: TypeScript
+* **Database**: PostgreSQL (Prisma ORM)
+* **Security**: Passport.js (JWT Access & Refresh Strategy), Argon2 password hashing
+* **Validation**: class-validator & class-transformer
+* **Containerization**: Docker & Docker Compose
+* **API Specs**: Swagger (OpenAPI 3.0)
+
+---
+
+## ⚙️ Environment Variables
+
+A `.env.example` file is included in the project root. Create a `.env` file in the root directory and configure the following variables:
+
+```env
+# Application configuration
+PORT=3000
+NODE_ENV=development
+
+# Database configuration (PostgreSQL)
+DATABASE_USER=postgres
+DATABASE_PASSWORD=postgres
+DATABASE_NAME=booking_platform
+DATABASE_PORT=5432
+DATABASE_HOST=localhost
+
+# Prisma-specific connection string
+DATABASE_URL="postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}?schema=public"
+
+# JWT configuration
+JWT_SECRET=super_secret_access_key_change_me
+JWT_REFRESH_SECRET=super_secret_refresh_key_change_me
 ```
 
-## Compile and run the project
+---
 
-```bash
-# development
-$ npm run start
+## 📦 Installation & Setup
 
-# watch mode
-$ npm run start:dev
+### Option 1: Running with Docker (Recommended)
 
-# production mode
-$ npm run start:prod
-```
+The project includes pre-configured `Dockerfile` and `compose.yaml` setups to orchestrate the Node.js application and the PostgreSQL database out of the box.
 
-## Run tests
+1. **Clone the Repository**:
+   ```bash
+   git clone <repository-url>
+   cd booking-platform-api
+   ```
+2. **Setup environment variables**:
+   ```bash
+   cp .env.example .env
+   ```
+3. **Start the containers**:
+   ```bash
+   docker compose up -d --build
+   ```
+   *This command spins up the database, runs database migrations/synchronizations, builds the application, and exposes it on port `3000`.*
+4. **Access Swagger Documentation**:
+   👉 Open [http://localhost:3000/docs](http://localhost:3000/docs) in your browser.
 
-```bash
-# unit tests
-$ npm run test
+---
 
-# e2e tests
-$ npm run test:e2e
+### Option 2: Running Locally
 
-# test coverage
-$ npm run test:cov
-```
+If you prefer to run the application on your host machine:
 
-## Deployment
+1. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
+2. **Setup Database (Docker)**:
+   You can spin up only the PostgreSQL database using Docker:
+   ```bash
+   docker compose up -d db
+   ```
+3. **Configure Environment**:
+   Ensure your `.env` file has the correct database credentials targeting `localhost` instead of `db`.
+4. **Synchronize Schema**:
+   Generate the Prisma Client and push the schema directly to your Postgres database:
+   ```bash
+   npx prisma generate
+   npx prisma db push
+   ```
+5. **Run the Server**:
+   ```bash
+   # Development mode with watch loop
+   npm run start:dev
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+   # Production mode
+   npm run build
+   npm run start:prod
+   ```
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+---
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+## 🗄️ Database Design & Sync
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+The database schema is defined in [schema.prisma](prisma/schema.prisma) and maps out three main tables:
+1. **`users`**: Contains credential records, hashed passwords, and refresh token hashes.
+2. **`services`**: Contains details of services (`title`, `duration`, `price`, `isActive`, etc.) created by merchants.
+3. **`bookings`**: Contains reservation details (`customerName`, `bookingDate`, `bookingTime`, `status`, `notes`, etc.) tied to a parent service.
 
-## Resources
+### Schema Sync and Migrations
+* To sync schema changes directly during development:
+  ```bash
+  npx prisma db push
+  ```
+* To create a formal SQL migration history file:
+  ```bash
+  npx prisma migrate dev --name <migration-name>
+  ```
+* Migrations will be generated under the `prisma/migrations` folder and can be applied in production environments using:
+  ```bash
+  npx prisma migrate deploy
+  ```
 
-Check out a few resources that may come in handy when working with NestJS:
+---
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## 📖 API Documentation (Swagger)
 
-## Support
+Interactive Swagger API specifications are exposed at:
+👉 **`http://localhost:3000/docs`**
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+The documentation allows you to directly try out all endpoints:
+* Use the **Authorize** lock button in the top right to paste your JWT Access Token (`Bearer <token>`) to unlock authenticated endpoints.
 
-## Stay in touch
+### Quick Route Overview
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+#### 1. Authentication
+* `POST /api/v1/auth/register` - Create a new user profile.
+* `POST /api/v1/auth/login` - Authenticate credentials and get Access & Refresh Tokens.
+* `POST /api/v1/auth/logout` - Invalidate the refresh token (Requires authentication).
+* `POST /api/v1/auth/refresh` - Rotate tokens using a valid refresh token header.
 
-## License
+#### 2. Service Management
+* `POST /api/v1/services` - Create a new service (Requires authentication).
+* `GET /api/v1/services` - Get a list of all active services (Requires authentication).
+* `GET /api/v1/services/:id` - Fetch details of a single service by ID (Requires authentication).
+* `PATCH /api/v1/services/:id` - Update service details (Requires authentication).
+* `DELETE /api/v1/services/:id` - Delete a service (Requires authentication).
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+#### 3. Booking Management
+* `POST /api/v1/bookings` - Create a new reservation slot (Public Endpoint).
+* `GET /api/v1/bookings` - Retrieve all bookings (Requires authentication).
+  * *Supports filtering by `status`, partial `search` query, cursor pagination limit (`limit`), and cursor index (`cursor`).*
+* `GET /api/v1/bookings/:id` - Fetch details of a single booking (Requires authentication).
+* `PATCH /api/v1/bookings/:id/status` - Update status (Requires authentication).
+* `PATCH /api/v1/bookings/:id/cancel` - Cancel a booking (Requires authentication).
+
+---
+
+## 🧠 Design Assumptions Made
+
+1. **Booking Time Storage & Comparison**: 
+   Dates and times are separated into database fields (`bookingDate` as `Date` and `bookingTime` as `Time`). Date validations check that the date is not in the past using a normalized midnight UTC comparison to ensure that bookings on the current calendar date are accepted regardless of local time-zone offsets.
+2. **Duplicate Booking Prevention (P2002)**:
+   A composite unique index `@@unique([serviceId, bookingDate, bookingTime])` is applied directly at the database level. This guarantees that booking collisions are prevented at the transaction level under high concurrency. The global exception filter captures this Prisma `P2002` error and maps it to a clear `409 ConflictException`.
+3. **Cursor-Based Pagination**:
+   We implemented native lookahead cursor pagination (`take: limit + 1`) instead of offset pagination (`skip`/`take`). Under large volumes, offset pagination requires scanning all preceding rows, causing a performance degradation. Cursor-based pagination provides stable `O(1)` operations.
+4. **Structured Error/Success Envelope**:
+   To ensure client-side compatibility and clean responses, all responses are enveloped:
+   * **Success Interceptor**: Wraps API successes as `{ success: true, data, meta: { requestId, timestamp, apiVersion } }`.
+   * **Global Exceptions Filter**: Catches any thrown exceptions and formats them as `{ success: false, error: { statusCode, message }, meta: { requestId, timestamp, apiVersion } }`.
+
+---
+
+## 🔮 Future Improvements
+
+1. **Notification Queueing**: Integrate a Redis-backed queue system (e.g. BullMQ) to send email or SMS reminders to customers automatically prior to their booking slot without blocking main thread API requests.
+2. **Soft Deletion for Services**: Rather than hard-deleting services from the system, introduce an `isDeleted` boolean. This prevents orphans in booking tables and preserves historical booking audits.
+3. **Caching Layer**: Cache read-heavy endpoints like `GET /services` using Redis to improve response times and decrease load on the database.
