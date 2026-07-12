@@ -84,7 +84,13 @@ This approach builds and runs the application and database without needing Node.
    docker compose up -d --build
    ```
    *This command spins up the Postgres database, runs all database migrations, compiles the code in dev mode, and maps local workspace changes in real-time.*
-4. **Access the API**:
+4. **Seed the Database (Optional)**:
+   Open a new terminal window and run:
+   ```bash
+   npx prisma db seed
+   ```
+   *This command populates your empty database with sample Users, Services, and Bookings so you have data to test with right away.*
+5. **Access the API**:
    👉 Swagger UI: **`http://localhost:3000/docs`**
 
 ---
@@ -105,7 +111,11 @@ Choose this option if you want to run and debug the server directly on your host
    npx prisma generate
    npx prisma migrate dev --name init
    ```
-4. **Start the application**:
+4. **Seed the Database (Optional)**:
+   ```bash
+   npx prisma db seed
+   ```
+5. **Start the application**:
    ```bash
    # Development mode with watch loop
    npm run start:dev
