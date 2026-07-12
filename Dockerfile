@@ -30,6 +30,7 @@ ENV NODE_ENV=production
 
 # Copy configurations and migrations
 COPY package*.json ./
+COPY prisma.config.ts ./ 
 COPY prisma ./prisma/
 
 # Install only production dependencies
