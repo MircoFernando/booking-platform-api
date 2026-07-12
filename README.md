@@ -1,6 +1,6 @@
 # Booking Platform REST API
 
-An enterprise-grade, high-performance **Booking Platform REST API** built with **NestJS**, **TypeScript**, and **PostgreSQL (via Prisma ORM)**. This API allows merchants to register accounts, manage services, and customers to book appointment reservation slots with database-level collision prevention, secure authentication, and fully enveloped request/response architectures.
+**Booking Platform REST API** built with **NestJS**, **TypeScript**, and **PostgreSQL (via Prisma ORM)**. This API allows merchants to register accounts, manage services, and customers to book appointment reservation slots with database-level collision prevention, secure authentication, and fully enveloped request/response architectures.
 
 ---
 
