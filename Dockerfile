@@ -36,7 +36,6 @@ COPY prisma ./prisma/
 RUN npm install --omit=dev --legacy-peer-deps
 
 # Copy generated Prisma Client and compiled JS artifact from build stage
-COPY --from=build /usr/src/app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=build /usr/src/app/src/generated/prisma ./src/generated/prisma
 COPY --from=build /usr/src/app/dist ./dist
 
