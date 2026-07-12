@@ -8,12 +8,25 @@ import { AuthModule } from './auth/auth.module';
 import { RequestIdMiddleware } from './common/middlewares/request-id.midleware';
 import { AppLogger } from './common/logger/app-logger.service';
 import { PrismaModule } from './prisma/prisma.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [UserModule, BookingsModule, ServicesModule, AuthModule, PrismaModule],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+        envFilePath: '.env',
+        expandVariables: true,
+    }),
+    UserModule,
+    BookingsModule,
+    ServicesModule,
+    AuthModule,
+    PrismaModule,
+  ],
   controllers: [AppController],
   providers: [AppService, AppLogger],
 })
+
 export class AppModule {
   // Apply the middleware to all routes
   configure(consumer: MiddlewareConsumer) {

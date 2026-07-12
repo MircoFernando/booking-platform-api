@@ -24,7 +24,7 @@ services:
       DATABASE_URL: postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@db:5432/${DATABASE_NAME}?schema=public
     ports:
       - "${PORT:-3000}:3000"
-    command: sh -c "npx prisma generate && npx prisma db push && npm run start:dev"
+    command: sh -c "npx prisma generate && npx prisma db push && node dist/src/main"
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
