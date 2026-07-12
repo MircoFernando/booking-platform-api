@@ -56,3 +56,6 @@ jobs:
             
             # Re-create and restart the containers with zero-downtime
             docker compose -f compose.prod.yaml up -d
+            
+            # Clean up old, untagged Docker images to free up SSD space
+            docker image prune -f
