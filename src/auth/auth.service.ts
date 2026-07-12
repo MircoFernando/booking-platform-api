@@ -13,6 +13,7 @@ export class AuthService {
         private readonly logger: AppLogger,
     ) { }
 
+    // Register a new user and return user details without password
     async register(registerDto: RegisterDto) {
         // Hash the password using Argon2
         const passwordHash = await argon2.hash(registerDto.password);
@@ -25,6 +26,7 @@ export class AuthService {
         return safeUser;
     }
 
+    // Login user, verify password hash, and return access/refresh tokens
     async login(loginDto: LoginDto) {
         this.logger.log(`Attempting login for: ${loginDto.email}`);
 
@@ -70,6 +72,7 @@ export class AuthService {
         };
     }
 
+    // Logout user by clearing their saved refresh token hash
     async logout(userId: string, logoutDto: LogoutDto) {
         this.logger.log(`Attempting logout for User ID: ${userId}`);
 
@@ -104,6 +107,7 @@ export class AuthService {
         };
     }
 
+    // Re-issue a new pair of access and refresh tokens
     async refreshTokens(refreshDto: RefreshDto) {
 
         const userId = refreshDto.userId;

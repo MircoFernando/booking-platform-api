@@ -5,13 +5,19 @@ import { UserService } from './user.service';
 export class UserController {
   constructor(private readonly userService: UserService) { }
 
-  @Get('find')
-  async getUser(@Query('id', ParseUUIDPipe) id: string) {
-    return this.userService.findOne(id);
-  }
+    // Get User by ID
+    // Route: GET /api/v1/users/find?id=...
+    // Body: None
+    @Get('find')
+    async getUser(@Query('id', ParseUUIDPipe) id: string) {
+        return this.userService.findOne(id);
+    }
 
-  @Get()
-  async getAllUsers() {
-    return this.userService.findAll();
-  }
+    // Get All Users
+    // Route: GET /api/v1/users
+    // Body: None
+    @Get()
+    async getAllUsers() {
+        return this.userService.findAll();
+    }
 }

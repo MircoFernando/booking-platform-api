@@ -6,6 +6,7 @@ import { CreateServiceDto, UpdateServiceDto } from './dto';
 export class ServicesService {
     constructor(private readonly prisma: PrismaService) { }
 
+    // Create a new service associated with the creator user
     async create(createdById: string, createServiceDto: CreateServiceDto) {
         return this.prisma.service.create({
             data: {
@@ -15,6 +16,7 @@ export class ServicesService {
         });
     }
 
+    // Update details of an existing service record
     async update(id: string, updateServiceDto: UpdateServiceDto) {
         const service = await this.prisma.service.findUnique({
             where: { id },
@@ -30,6 +32,7 @@ export class ServicesService {
         });
     }
 
+    // Delete a service record from the database by ID
     async delete(id: string) {
         const service = await this.prisma.service.findUnique({
             where: { id },
@@ -44,10 +47,12 @@ export class ServicesService {
         });
     }
 
+    // Retrieve all service records
     async findAll() {
         return this.prisma.service.findMany();
     }
 
+    // Retrieve a single service by its ID
     async findOne(id: string) {
         const service = await this.prisma.service.findUnique({
             where: { id }

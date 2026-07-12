@@ -7,6 +7,7 @@ import { Prisma } from '../generated/prisma/client';
 export class BookingsService {
     constructor(private readonly prisma: PrismaService) { }
 
+    // Create a new booking for an active service
     async create(createBookingDto: CreateBookingDto) {
         const { serviceId, bookingDate, bookingTime, ...rest } = createBookingDto;
 
@@ -62,6 +63,7 @@ export class BookingsService {
         }
     }
 
+    // Retrieve bookings with filtering, search, and cursor pagination
     async getAllBookings(search?: string, status?: string, limit = 10, cursor?: string) {
         const where: any = {};
 
@@ -110,6 +112,7 @@ export class BookingsService {
         };
     }
 
+    // Retrieve a single booking record by ID
     async findOne(id: string) {
         const booking = await this.prisma.booking.findUnique({
             where: { id },
@@ -125,6 +128,7 @@ export class BookingsService {
         return booking;
     }
 
+    // Update the status of an existing booking
     async updateStatus(id: string, updateBookingStatusDto: UpdateBookingStatusDto) {
         const booking = await this.findOne(id);
         const newStatus = updateBookingStatusDto.status;
@@ -147,6 +151,7 @@ export class BookingsService {
         });
     }
 
+    // Cancel an active booking record
     async cancel(id: string) {
         const booking = await this.findOne(id);
 

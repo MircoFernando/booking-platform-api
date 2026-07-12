@@ -6,6 +6,7 @@ import { CreateUserDto } from './dto';
 export class UserService {
   constructor(private readonly prisma: PrismaService) { }
 
+  // Find user by ID (excludes password hash)
   async findOne(id: string) {
     try {
       const user = await this.prisma.user.findUnique({
@@ -24,6 +25,7 @@ export class UserService {
     }
   }
 
+  // Get all registered users (excludes password hashes)
   async findAll() {
     try {
       const users = await this.prisma.user.findMany();
@@ -36,18 +38,21 @@ export class UserService {
     }
   }
 
+  // Find user by email including sensitive fields
   async findByEmail(email: string) {
     return this.prisma.user.findUnique({
       where: { email },
     });
   }
 
+  // Find raw user by ID including sensitive fields
   async findRawById(id: string) {
     return this.prisma.user.findUnique({
       where: { id },
     });
   }
 
+  // Register a new user in the database
   async create(createUserDto: CreateUserDto, passwordHash: string) {
     // Check if user already exists
     const existingUser = await this.findByEmail(createUserDto.email);
@@ -65,6 +70,7 @@ export class UserService {
   }
 
   // Refresh Token Implementation
+  // Update the refresh token hash for a user
   async updateRefreshToken(id: string, refreshTokenHash: string | null) {
     return this.prisma.user.update({
       where: { id },
