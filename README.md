@@ -1,184 +1,278 @@
-# EN2H Software Engineer Intern Technical Assignment – Booking Platform REST API
+# Booking Platform REST API
 
-An enterprise-ready Booking Platform REST API built with **NestJS**, **TypeScript**, and **PostgreSQL (via Prisma ORM)**. This API allows merchants to manage services and customers to create and manage bookings, featuring robust authentication, secure database design, and structured exception wrapping.
-
----
-
-## 🚀 Project Overview
-
-The Booking Platform REST API is a scalable backend service structured following NestJS architectural best practices. It implements JWT token-based authentication (supporting dual tokens: short-lived Access Tokens and long-lived Refresh Tokens with secure Argon2 hashing), Service management, and Booking reservation slots with automated collision checks at the database layer.
+An enterprise-grade, high-performance **Booking Platform REST API** built with **NestJS**, **TypeScript**, and **PostgreSQL (via Prisma ORM)**. This API allows merchants to register accounts, manage services, and customers to book appointment reservation slots with database-level collision prevention, secure authentication, and fully enveloped request/response architectures.
 
 ---
 
-## 🛠️ Tech Stack
+## 🌐 Live URL & API Documentation
 
-* **Framework**: NestJS (v11)
-* **Language**: TypeScript
-* **Database**: PostgreSQL (Prisma ORM)
-* **Security**: Passport.js (JWT Access & Refresh Strategy), Argon2 password hashing
-* **Validation**: class-validator & class-transformer
+The production environment is live and fully accessible:
+* **Interactive API Documentation (Swagger UI)**: 
+  👉 **[http://178.128.17.103:3000/docs](http://178.128.17.103:3000/docs)**
+* **Swagger JSON Spec URL**: `http://178.128.17.103:3000/docs-json`
+* **Swagger YAML Spec URL**: `http://178.128.17.103:3000/docs-yaml`
+
+---
+
+## 🎨 System Diagrams
+
+### 1. System Architecture
+```mermaid
+graph TD
+    Client[Client Browser / API Client] -->|HTTP Request| Port3000[Port 3000 - Exposed]
+    Port3000 -->|Routes to| NestJS[NestJS Application Server]
+    
+    subgraph NestJS Backend
+        AuthGuard[JwtAuthGuard / Passport JWT] -->|Secures| Controllers[Controllers: Auth, Services, Bookings, Users]
+        Controllers -->|Calls Services| BusinessLogic[Services - Business Logic]
+        BusinessLogic -->|Uses| Prisma[Prisma ORM Client]
+    end
+
+    Prisma -->|Queries via TCP| PostgreSQL[(PostgreSQL Database - Port 5432)]
+```
+
+### 2. Entity Relationship Diagram (ERD)
+```mermaid
+erDiagram
+    users {
+        uuid id PK
+        string email UK
+        string password_hash
+        string name
+        string refresh_token_hash
+        timestamp created_at
+        timestamp updated_at
+    }
+    services {
+        uuid id PK
+        uuid created_by_id FK
+        string title
+        string description
+        integer duration
+        decimal price
+        boolean is_active
+        timestamp created_at
+        timestamp updated_at
+    }
+    bookings {
+        uuid id PK
+        uuid service_id FK
+        string customer_name
+        string customer_email
+        string customer_phone
+        date booking_date
+        time booking_time
+        enum status
+        string notes
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    users ||--o{ services : "creates (1:N)"
+    services ||--o{ bookings : "has reservations (1:N)"
+```
+
+### 3. Application Use Cases
+```mermaid
+graph LR
+    subgraph Actors
+        Merchant[Merchant / Owner]
+        Customer[Customer / Guest]
+    end
+
+    subgraph Authentication Actions
+        Register[Register Profile]
+        Login[Login / Rotate Tokens]
+        Logout[Logout Session]
+    end
+
+    subgraph Service Actions
+        CreateService[Create Service]
+        ViewServices[View Active Services]
+        EditService[Update Service Details]
+        DeleteService[Delete Service]
+    end
+
+    subgraph Booking Actions
+        CreateBooking[Book a Time Slot]
+        ViewBookings[View Bookings & Filter]
+        UpdateStatus[Approve / Complete Booking]
+        CancelBooking[Cancel Reservation]
+    end
+
+    Merchant --> Register
+    Merchant --> Login
+    Merchant --> Logout
+    Merchant --> CreateService
+    Merchant --> ViewServices
+    Merchant --> EditService
+    Merchant --> DeleteService
+    Merchant --> ViewBookings
+    Merchant --> UpdateStatus
+
+    Customer --> CreateBooking
+    Customer --> CancelBooking
+```
+
+---
+
+## 🛠️ Tech Stack & Tooling
+
+* **Backend Framework**: NestJS (v11) with modular dependency injection pattern
+* **Programming Language**: TypeScript (ES2023 target)
+* **Database Management**: PostgreSQL (v16) with Prisma ORM
+* **Authentication**: Passport.js with Dual Tokens (Access & Refresh JWT rotating scheme)
+* **Security & Hashing**: Argon2 for passwords and refresh token hashes
+* **Input Validation**: class-validator & class-transformer for DTO sanitization
 * **Containerization**: Docker & Docker Compose
-* **API Specs**: Swagger (OpenAPI 3.0)
+* **CI/CD Pipeline**: GitHub Actions with remote Docker Hub publish and automated SSH deployment
+* **API Documentation**: Swagger (OpenAPI 3.0 specification)
 
 ---
 
 ## ⚙️ Environment Variables
 
-A `.env.example` file is included in the project root. Create a `.env` file in the root directory and configure the following variables:
-
-```env
-# Application configuration
-PORT=3000
-NODE_ENV=development
-
-# Database configuration (PostgreSQL)
-DATABASE_USER=postgres
-DATABASE_PASSWORD=postgres
-DATABASE_NAME=booking_platform
-DATABASE_PORT=5432
-DATABASE_HOST=localhost
-
-# Prisma-specific connection string
-DATABASE_URL="postgresql://${DATABASE_USER}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}?schema=public"
-
-# JWT configuration
-JWT_SECRET=super_secret_access_key_change_me
-JWT_REFRESH_SECRET=super_secret_refresh_key_change_me
+A `.env.example` file is included in the project root. Create a `.env` file in the root directory and configure the variables:
+```bash
+cp .env.example .env
 ```
+
+| Key | Example Value | Description |
+| :--- | :--- | :--- |
+| `PORT` | `3000` | Port the API server listens on inside and outside the container. |
+| `NODE_ENV` | `production` | Execution mode (`development` or `production`). |
+| `DATABASE_HOST` | `db` | Database host hostname (`db` for Docker Compose, `localhost` for local run). |
+| `DATABASE_PORT` | `5432` | PostgreSQL database TCP port. |
+| `DATABASE_USER` | `postgres` | Username for database authentication. |
+| `DATABASE_PASSWORD` | `your_secure_password` | Password for database authentication. |
+| `DATABASE_NAME` | `booking_platform` | Name of the PostgreSQL database catalog. |
+| `DATABASE_URL` | `postgresql://...` | Full connection URL string used by Prisma ORM. |
+| `JWT_SECRET` | `super_secret_access_key` | Secret key used to sign and verify short-lived Access Tokens. |
+| `JWT_REFRESH_SECRET` | `super_secret_refresh_key`| Secret key used to sign and verify long-lived Refresh Tokens. |
+| `DOCKER_REGISTRY_USER` | `your_dockerhub_username` | Your Docker Hub namespace where images are pushed. |
 
 ---
 
 ## 📦 Installation & Setup
 
-### Option 1: Running with Docker (Recommended)
-
-The project includes pre-configured `Dockerfile` and `compose.yaml` setups to orchestrate the Node.js application and the PostgreSQL database out of the box.
+### Option 1: Running with Docker Compose (Recommended)
+This approach builds and runs the application and database without needing Node.js or PostgreSQL installed on your host machine.
 
 1. **Clone the Repository**:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/MircoFernando/booking-platform-api.git
    cd booking-platform-api
    ```
-2. **Setup environment variables**:
+2. **Configure environment settings**:
    ```bash
    cp .env.example .env
+   # Open .env and adjust credentials
    ```
-3. **Start the containers**:
+3. **Start the development containers**:
    ```bash
    docker compose up -d --build
    ```
-   *This command spins up the database, runs database migrations/synchronizations, builds the application, and exposes it on port `3000`.*
-4. **Access Swagger Documentation**:
-   👉 Open [http://localhost:3000/docs](http://localhost:3000/docs) in your browser.
+   *This command spins up the Postgres database, runs all database migrations, compiles the code in dev mode, and maps local workspace changes in real-time.*
+4. **Access the API**:
+   👉 Swagger UI: **`http://localhost:3000/docs`**
 
 ---
 
-### Option 2: Running Locally
-
-If you prefer to run the application on your host machine:
+### Option 2: Running Locally (Bare Metal)
+Choose this option if you want to run and debug the server directly on your host.
 
 1. **Install Dependencies**:
    ```bash
-   npm install
+   npm install --legacy-peer-deps
    ```
-2. **Setup Database (Docker)**:
-   You can spin up only the PostgreSQL database using Docker:
+2. **Launch the database container only**:
    ```bash
    docker compose up -d db
    ```
-3. **Configure Environment**:
-   Ensure your `.env` file has the correct database credentials targeting `localhost` instead of `db`.
-4. **Synchronize Schema**:
-   Generate the Prisma Client and push the schema directly to your Postgres database:
+3. **Generate Prisma Client and apply migrations**:
    ```bash
    npx prisma generate
-   npx prisma db push
+   npx prisma migrate dev --name init
    ```
-5. **Run the Server**:
+4. **Start the application**:
    ```bash
    # Development mode with watch loop
    npm run start:dev
 
-   # Production mode
+   # Production mode compilation & startup
    npm run build
    npm run start:prod
    ```
 
 ---
 
-## 🗄️ Database Design & Sync
+## 🗄️ Database Setup & Migrations
 
-The database schema is defined in [schema.prisma](prisma/schema.prisma) and maps out three main tables:
-1. **`users`**: Contains credential records, hashed passwords, and refresh token hashes.
-2. **`services`**: Contains details of services (`title`, `duration`, `price`, `isActive`, etc.) created by merchants.
-3. **`bookings`**: Contains reservation details (`customerName`, `bookingDate`, `bookingTime`, `status`, `notes`, etc.) tied to a parent service.
+We follow standard Prisma migrations workflows:
 
-### Schema Sync and Migrations
-* To sync schema changes directly during development:
+* **Syncing schema adjustments in development (fast iteration)**:
   ```bash
   npx prisma db push
   ```
-* To create a formal SQL migration history file:
+* **Creating a new migration file after changes inside `schema.prisma`**:
   ```bash
   npx prisma migrate dev --name <migration-name>
   ```
-* Migrations will be generated under the `prisma/migrations` folder and can be applied in production environments using:
+* **Resetting database migration state (warning: drops all data)**:
+  ```bash
+  npx prisma migrate reset --force
+  ```
+* **Applying pending migrations in production (deployments)**:
   ```bash
   npx prisma migrate deploy
   ```
 
 ---
 
-## 📖 API Documentation (Swagger)
+## 📖 API Endpoint Directory
 
-Interactive Swagger API specifications are exposed at:
-👉 **`http://localhost:3000/docs`**
+All responses are wrapped in a standard JSON envelope:
+* **Success Envelope**: `{ success: true, data: [...], meta: { requestId, timestamp, apiVersion } }`
+* **Error Envelope**: `{ success: false, error: { statusCode, message }, meta: { ... } }`
 
-The documentation allows you to directly try out all endpoints:
-* Use the **Authorize** lock button in the top right to paste your JWT Access Token (`Bearer <token>`) to unlock authenticated endpoints.
+### Summary Table
 
-### Quick Route Overview
-
-#### 1. Authentication
-* `POST /api/v1/auth/register` - Create a new user profile.
-* `POST /api/v1/auth/login` - Authenticate credentials and get Access & Refresh Tokens.
-* `POST /api/v1/auth/logout` - Invalidate the refresh token (Requires authentication).
-* `POST /api/v1/auth/refresh` - Rotate tokens using a valid refresh token header.
-
-#### 2. Service Management
-* `POST /api/v1/services` - Create a new service (Requires authentication).
-* `GET /api/v1/services` - Get a list of all active services (Requires authentication).
-* `GET /api/v1/services/:id` - Fetch details of a single service by ID (Requires authentication).
-* `PATCH /api/v1/services/:id` - Update service details (Requires authentication).
-* `DELETE /api/v1/services/:id` - Delete a service (Requires authentication).
-
-#### 3. Booking Management
-* `POST /api/v1/bookings` - Create a new reservation slot (Public Endpoint).
-* `GET /api/v1/bookings` - Retrieve all bookings (Requires authentication).
-  * *Supports filtering by `status`, partial `search` query, cursor pagination limit (`limit`), and cursor index (`cursor`).*
-* `GET /api/v1/bookings/:id` - Fetch details of a single booking (Requires authentication).
-* `PATCH /api/v1/bookings/:id/status` - Update status (Requires authentication).
-* `PATCH /api/v1/bookings/:id/cancel` - Cancel a booking (Requires authentication).
+| Route | Method | Authentication | Description |
+| :--- | :--- | :--- | :--- |
+| `/api/v1/auth/register` | `POST` | Public | Register a new merchant user profile. |
+| `/api/v1/auth/login` | `POST` | Public | Exchange credentials for Dual JWT Tokens (Access/Refresh). |
+| `/api/v1/auth/logout` | `POST` | Required | Invalidate and clear refresh token hash. |
+| `/api/v1/auth/refresh` | `POST` | Required (Refresh Token)| Rotate JWT Access & Refresh tokens. |
+| `/api/v1/services` | `POST` | Required | Create a new service option. |
+| `/api/v1/services` | `GET` | Required | Retrieve list of active services. |
+| `/api/v1/services/:id` | `GET` | Required | Get details of a single service by UUID. |
+| `/api/v1/services/:id` | `PATCH` | Required | Modify properties of an existing service. |
+| `/api/v1/services/:id` | `DELETE` | Required | Remove service option from system. |
+| `/api/v1/bookings` | `POST` | Public | Create a new reservation slot. |
+| `/api/v1/bookings` | `GET` | Required | Retrieve all bookings (supports status/search/pagination). |
+| `/api/v1/bookings/:id` | `GET` | Required | Fetch specific booking detail. |
+| `/api/v1/bookings/:id/status` | `PATCH` | Required | Update status (PENDING, CONFIRMED, COMPLETED, CANCELLED). |
+| `/api/v1/bookings/:id/cancel` | `PATCH` | Required | Cancel booking reservation. |
+| `/api/v1/users` | `GET` | Required | Retrieve list of all users. |
+| `/api/v1/users/find` | `GET` | Required | Retrieve a specific user by UUID query (`?id=...`). |
 
 ---
 
 ## 🧠 Design Assumptions Made
 
-1. **Booking Time Storage & Comparison**: 
-   Dates and times are separated into database fields (`bookingDate` as `Date` and `bookingTime` as `Time`). Date validations check that the date is not in the past using a normalized midnight UTC comparison to ensure that bookings on the current calendar date are accepted regardless of local time-zone offsets.
-2. **Duplicate Booking Prevention (P2002)**:
-   A composite unique index `@@unique([serviceId, bookingDate, bookingTime])` is applied directly at the database level. This guarantees that booking collisions are prevented at the transaction level under high concurrency. The global exception filter captures this Prisma `P2002` error and maps it to a clear `409 ConflictException`.
-3. **Cursor-Based Pagination**:
-   We implemented native lookahead cursor pagination (`take: limit + 1`) instead of offset pagination (`skip`/`take`). Under large volumes, offset pagination requires scanning all preceding rows, causing a performance degradation. Cursor-based pagination provides stable `O(1)` operations.
-4. **Structured Error/Success Envelope**:
-   To ensure client-side compatibility and clean responses, all responses are enveloped:
-   * **Success Interceptor**: Wraps API successes as `{ success: true, data, meta: { requestId, timestamp, apiVersion } }`.
-   * **Global Exceptions Filter**: Catches any thrown exceptions and formats them as `{ success: false, error: { statusCode, message }, meta: { requestId, timestamp, apiVersion } }`.
+1. **Composite Database Unique Constraints**:
+   A database-level unique index `@@unique([serviceId, bookingDate, bookingTime])` prevents duplicate reservation collisions. This guarantees that booking requests submitted concurrently for the same slot fail at the database transaction layer. The application catches Prisma `P2002` violations and maps them to a `409 ConflictException`.
+2. **Dual-Token JWT Rotation**:
+   We implemented an Access Token (15m expiry) and Refresh Token (7d expiry) scheme. The Refresh Token is hashed using Argon2 and stored in the database. When rotated, the old refresh token is invalidated, preventing replay attacks.
+3. **Cursor-Based Pagination for Bookings**:
+   We implemented lookahead cursor pagination (`take: limit + 1`) instead of offset-based pagination (`skip`/`take`). Offset pagination requires scanning all preceding records, which degrades database performance over time. Cursor-based pagination provides constant-time `O(1)` operations.
+4. **Time & Date Isolation**:
+   Dates and times are isolated into separate columns (`bookingDate` as `Date` and `bookingTime` as `Time`). This prevents time-zone drift when converting to UTC, keeping scheduling precise.
 
 ---
 
 ## 🔮 Future Improvements
 
-1. **Notification Queueing**: Integrate a Redis-backed queue system (e.g. BullMQ) to send email or SMS reminders to customers automatically prior to their booking slot without blocking main thread API requests.
-2. **Soft Deletion for Services**: Rather than hard-deleting services from the system, introduce an `isDeleted` boolean. This prevents orphans in booking tables and preserves historical booking audits.
-3. **Caching Layer**: Cache read-heavy endpoints like `GET /services` using Redis to improve response times and decrease load on the database.
+1. **Email/SMS Reminder Service**: Integrate a message queue system (e.g. BullMQ with Redis) to send email confirmations and SMS reminders before appointment slots.
+2. **Soft Deletion**: Replace hard deletion on `services` with an `isDeleted` flag to maintain relational database integrity and historical audits on past bookings.
+3. **Performance Caching**: Integrate Redis to cache read-heavy endpoints like `GET /services` to minimize database queries.
