@@ -17,102 +17,13 @@ The production environment is live and fully accessible:
 ## 🎨 System Diagrams
 
 ### 1. System Architecture
-```mermaid
-graph TD
-    Client[Client Browser / API Client] -->|HTTP Request| Port3000[Port 3000 - Exposed]
-    Port3000 -->|Routes to| NestJS[NestJS Application Server]
-    
-    subgraph NestJS Backend
-        AuthGuard[JwtAuthGuard / Passport JWT] -->|Secures| Controllers[Controllers: Auth, Services, Bookings, Users]
-        Controllers -->|Calls Services| BusinessLogic[Services - Business Logic]
-        BusinessLogic -->|Uses| Prisma[Prisma ORM Client]
-    end
-
-    Prisma -->|Queries via TCP| PostgreSQL[(PostgreSQL Database - Port 5432)]
-```
+![System Architecture](docs/System-Architecture.png)
 
 ### 2. Entity Relationship Diagram (ERD)
-```mermaid
-erDiagram
-    users {
-        uuid id PK
-        string email UK
-        string password_hash
-        string name
-        string refresh_token_hash
-        timestamp created_at
-        timestamp updated_at
-    }
-    services {
-        uuid id PK
-        uuid created_by_id FK
-        string title
-        string description
-        integer duration
-        decimal price
-        boolean is_active
-        timestamp created_at
-        timestamp updated_at
-    }
-    bookings {
-        uuid id PK
-        uuid service_id FK
-        string customer_name
-        string customer_email
-        string customer_phone
-        date booking_date
-        time booking_time
-        enum status
-        string notes
-        timestamp created_at
-        timestamp updated_at
-    }
-
-    users ||--o{ services : "creates (1:N)"
-    services ||--o{ bookings : "has reservations (1:N)"
-```
+![Entity Relationship Diagram](docs/ER%20Diagram.png)
 
 ### 3. Application Use Cases
-```mermaid
-graph LR
-    subgraph Actors
-        Merchant[Merchant / Owner]
-        Customer[Customer / Guest]
-    end
-
-    subgraph Authentication Actions
-        Register[Register Profile]
-        Login[Login / Rotate Tokens]
-        Logout[Logout Session]
-    end
-
-    subgraph Service Actions
-        CreateService[Create Service]
-        ViewServices[View Active Services]
-        EditService[Update Service Details]
-        DeleteService[Delete Service]
-    end
-
-    subgraph Booking Actions
-        CreateBooking[Book a Time Slot]
-        ViewBookings[View Bookings & Filter]
-        UpdateStatus[Approve / Complete Booking]
-        CancelBooking[Cancel Reservation]
-    end
-
-    Merchant --> Register
-    Merchant --> Login
-    Merchant --> Logout
-    Merchant --> CreateService
-    Merchant --> ViewServices
-    Merchant --> EditService
-    Merchant --> DeleteService
-    Merchant --> ViewBookings
-    Merchant --> UpdateStatus
-
-    Customer --> CreateBooking
-    Customer --> CancelBooking
-```
+![Application Use Cases](docs/UserCase%20Diagram.png)
 
 ---
 
@@ -208,7 +119,7 @@ Choose this option if you want to run and debug the server directly on your host
 
 ## 🗄️ Database Setup & Migrations
 
-We follow standard Prisma migrations workflows:
+I follow standard Prisma migrations workflows:
 
 * **Syncing schema adjustments in development (fast iteration)**:
   ```bash
@@ -263,9 +174,9 @@ All responses are wrapped in a standard JSON envelope:
 1. **Composite Database Unique Constraints**:
    A database-level unique index `@@unique([serviceId, bookingDate, bookingTime])` prevents duplicate reservation collisions. This guarantees that booking requests submitted concurrently for the same slot fail at the database transaction layer. The application catches Prisma `P2002` violations and maps them to a `409 ConflictException`.
 2. **Dual-Token JWT Rotation**:
-   We implemented an Access Token (15m expiry) and Refresh Token (7d expiry) scheme. The Refresh Token is hashed using Argon2 and stored in the database. When rotated, the old refresh token is invalidated, preventing replay attacks.
+   I implemented an Access Token (15m expiry) and Refresh Token (7d expiry) scheme. The Refresh Token is hashed using Argon2 and stored in the database. When rotated, the old refresh token is invalidated, preventing replay attacks.
 3. **Cursor-Based Pagination for Bookings**:
-   We implemented lookahead cursor pagination (`take: limit + 1`) instead of offset-based pagination (`skip`/`take`). Offset pagination requires scanning all preceding records, which degrades database performance over time. Cursor-based pagination provides constant-time `O(1)` operations.
+   I implemented lookahead cursor pagination (`take: limit + 1`) instead of offset-based pagination (`skip`/`take`). Offset pagination requires scanning all preceding records, which degrades database performance over time. Cursor-based pagination provides constant-time `O(1)` operations.
 4. **Time & Date Isolation**:
    Dates and times are isolated into separate columns (`bookingDate` as `Date` and `bookingTime` as `Time`). This prevents time-zone drift when converting to UTC, keeping scheduling precise.
 
@@ -276,3 +187,5 @@ All responses are wrapped in a standard JSON envelope:
 1. **Email/SMS Reminder Service**: Integrate a message queue system (e.g. BullMQ with Redis) to send email confirmations and SMS reminders before appointment slots.
 2. **Soft Deletion**: Replace hard deletion on `services` with an `isDeleted` flag to maintain relational database integrity and historical audits on past bookings.
 3. **Performance Caching**: Integrate Redis to cache read-heavy endpoints like `GET /services` to minimize database queries.
+4. **Role-Based Access Control (RBAC)**: Expand user schemas and authentication guards to support roles (e.g. Customer, Merchant, Admin) to lock down merchant management endpoints from unauthorized customers.
+5. **Additional Database Indexing**: Add database indexes on frequently filtered or searched columns (such as `bookings.customer_email` and `bookings.booking_date`) to optimize SQL lookup performance as data volumes grow.
