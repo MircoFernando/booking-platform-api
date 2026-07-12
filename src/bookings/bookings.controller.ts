@@ -17,8 +17,10 @@ export class BookingsController {
     async findAll(
         @Query('search') search?: string,
         @Query('status') status?: string,
+        @Query('limit') limit?: number,
+        @Query('cursor') cursor?: string,
     ) {
-        return this.bookingsService.getAllBookings(search, status);
+        return this.bookingsService.getAllBookings(search, status, limit ? Number(limit) : undefined, cursor);
     }
 
     @UseGuards(JwtAuthGuard)

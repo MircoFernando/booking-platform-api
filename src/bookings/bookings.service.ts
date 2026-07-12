@@ -62,7 +62,7 @@ export class BookingsService {
         }
     }
 
-    async getAllBookings(search?: string, status?: string) {
+    async getAllBookings(search?: string, status?: string, limit = 10, cursor?: string) {
         const where: any = {};
 
         if (status) {
@@ -77,12 +77,37 @@ export class BookingsService {
             ];
         }
 
-        return this.prisma.booking.findMany({
+        // Cap the limit to a maximum of 100 to protect server resources
+        const parsedLimit = Math.min(Math.max(1, limit), 100);
+
+        const findManyArgs: any = {
             where,
+            take: parsedLimit + 1, // Look ahead by 1 item to detect next page
+            orderBy: { id: 'asc' }, // Order by id to ensure stable pagination
             include: {
                 service: true,
             },
-        });
+        };
+
+        if (cursor) {
+            findManyArgs.cursor = { id: cursor };
+            findManyArgs.skip = 1; // Skip the cursor itself
+        }
+
+        const bookings = await this.prisma.booking.findMany(findManyArgs);
+
+        let nextCursor: string | null = null;
+        const items = [...bookings]; // Create copy of bookings
+
+        if (items.length > parsedLimit) {
+            items.pop(); // Remove the lookahead item
+            nextCursor = items[items.length - 1].id;
+        }
+
+        return {
+            items,
+            nextCursor,
+        };
     }
 
     async findOne(id: string) {
