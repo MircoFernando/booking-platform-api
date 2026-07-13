@@ -11,6 +11,7 @@ services:
   server:
     build:
       context: .
+      target: build
     init: true
     environment:
       NODE_ENV: ${NODE_ENV}
